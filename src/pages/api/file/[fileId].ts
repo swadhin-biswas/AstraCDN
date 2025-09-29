@@ -1,9 +1,31 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
-import { client } from '@/lib/discord';
 import { ImageModel } from '@/lib/models';
- 
+
+// Helper function to call Discord API
+async function callDiscordAPI(endpoint: string, method: string = 'GET', body?: any) {
+  const token = process.env.BOT_TOKEN;
+  if (!token) {
+    throw new Error("BOT_TOKEN environment variable is not set");
+  }
+  
+  const response = await fetch(`https://discord.com/api/v10${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bot ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(body && { body: JSON.stringify(body) })
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(`Discord API error: ${response.status} ${response.statusText} - ${errorData}`);
+  }
+  
+  return response.json();
+}
 
 export const GET: APIRoute = async ({ params }) => {
   const fileId = params.fileId;
@@ -18,17 +40,14 @@ export const GET: APIRoute = async ({ params }) => {
       return new Response(JSON.stringify({ error: 'File not found in DB' }), { status: 404 });
     }
 
-    const channel = await client.channels.fetch(image.channelId);
-    if (!channel?.isTextBased()) {
-      return new Response(JSON.stringify({ error: 'Invalid channel' }), { status: 500 });
-    }
-
-    const message = await channel.messages.fetch(fileId);
+    // Fetch message from Discord using REST API
+    const message = await callDiscordAPI(`/channels/${image.channelId}/messages/${fileId}`, 'GET');
+    
     if (!message) {
       return new Response(JSON.stringify({ error: 'Message not found' }), { status: 404 });
     }
 
-    const attachment = message.attachments.first();
+    const attachment = message.attachments?.[0];
     if (!attachment) {
       return new Response(JSON.stringify({ error: 'No attachment found' }), { status: 404 });
     }
@@ -66,14 +85,12 @@ export const DELETE: APIRoute = async ({ params }) => {
       return new Response(JSON.stringify({ error: 'File not found in DB' }), { status: 404 });
     }
 
-    const channel = await client.channels.fetch(image.channelId);
-    if (channel?.isTextBased()) {
-      try {
-        await channel.messages.delete(fileId);
-      } catch (discordError) {
-        console.error("[Discord Delete Error] Failed to delete message:", discordError);
-        // It is safe to ignore this error and proceed with deleting the database entry
-      }
+    // Delete message from Discord using REST API
+    try {
+      await callDiscordAPI(`/channels/${image.channelId}/messages/${fileId}`, 'DELETE');
+    } catch (discordError) {
+      console.error("[Discord Delete Error] Failed to delete message:", discordError);
+      // It is safe to ignore this error and proceed with deleting the database entry
     }
 
     await ImageModel.deleteOne({ fileId });
