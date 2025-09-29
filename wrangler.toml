@@ -4,3 +4,6 @@ compatibility_date = "2024-03-12"
 
 [build]
 command = "bun run build"
+
+[observability.logs]
+enabled = true
