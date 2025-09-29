@@ -14,7 +14,9 @@
     "discord.js": "^14.22.1",
     "dotenv": "^17.2.2",
     "mongoose": "^8.18.2",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "vite": "^7.1.7",
+    "zlib-sync": "^0.1.10"
   },
   "homepage": "https://github.com/swadhinbiswas/AstraCDN",
   "bugs": {
