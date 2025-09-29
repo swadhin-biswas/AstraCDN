@@ -1,0 +1,48 @@
+---
+import type { AstroGlobal } from 'astro';
+
+interface Props {
+    error: Error;
+}
+
+const { error } = Astro.props as Props;
+---
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>AstraCDN - Error</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="/src/styles/global.css" />
+</head>
+<body>
+    <header>
+        <h1><a href="/" style="color: inherit; text-decoration: none;">AstraCDN</a></h1>
+    </header>
+
+    <main class="container">
+        <div class="error-content">
+            <h2>Oops! Something Went Wrong</h2>
+            <p>We've encountered an unexpected error. Please try again later.</p>
+            
+            {import.meta.env.DEV && error && (
+                <div>
+                    <h3>Development Error Details:</h3>
+                    <pre>
+                        <strong>{error.name}: {error.message}</strong>
+                        {
+                            error.stack && <p>{error.stack}</p>
+                        }
+                    </pre>
+                </div>
+            )}
+        </div>
+    </main>
+
+    <footer>
+        <p>@swadhinbiswas github</p>
+    </footer>
+</body>
+</html>
