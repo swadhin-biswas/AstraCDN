@@ -7,7 +7,7 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    let buffer: Buffer;
+    let fileBuffer: Buffer | Uint8Array;
     let filename: string;
 
     const contentType = request.headers.get("content-type");
@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request }) => {
           { status: 400 }
         );
       }
-      buffer = Buffer.from(imageBase64, "base64");
+      fileBuffer = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
       filename = fn;
     } else if (contentType?.includes("multipart/form-data")) {
       const formData = await request.formData();
@@ -30,7 +30,7 @@ export const POST: APIRoute = async ({ request }) => {
           status: 400,
         });
       }
-      buffer = Buffer.from(await file.arrayBuffer());
+      fileBuffer = new Uint8Array(await file.arrayBuffer());
       filename = file.name;
     } else {
       return new Response(JSON.stringify({ error: "Invalid content type" }), {
@@ -38,12 +38,12 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const message = await sendImageToDiscord(buffer, filename);
+    const message = await sendImageToDiscord(fileBuffer, filename);
 
     // Log to Mongo
     await ImageModel.create({
       fileId: message.id,
-      channelId: message.channel.id,
+      channelId: message.channel_id,
     });
 
     const host = new URL(request.url).origin;
@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         fileId: message.id,
-        discordUrl: message.attachments.first()?.url,
+        discordUrl: message.attachments?.[0]?.url || null,
         viewUrl: `${host}/api/file/${message.id}`, // optional proxy
       }),
       { status: 200 }
