@@ -225,6 +225,9 @@ import '../styles/theme.css';
         const directUrl = document.querySelector('#results-container .card pre:nth-of-type(1) code');
         const markdownUrl = document.querySelector('#results-container .card pre:nth-of-type(2) code');
         const htmlUrl = document.querySelector('#results-container .card pre:nth-of-type(3) code');
+        const uploadError = document.createElement('div');
+        uploadError.className = 'error-message';
+        uploadError.style.cssText = 'color: #ff6b6b; padding: 1rem; text-align: center;';
 
         dropZone.addEventListener('click', () => fileInput.click());
 
@@ -254,9 +257,28 @@ import '../styles/theme.css';
         });
 
         async function handleFileUpload(file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showError('Please select an image file (jpg, png, gif, etc.)');
+                return;
+            }
+
+            // Validate file size (max 8MB)
+            if (file.size > 8 * 1024 * 1024) {
+                showError('File size exceeds 8MB limit');
+                return;
+            }
+
+            // Reset UI
             uploadContainer.hidden = true;
             resultsContainer.hidden = false;
             resultsContainer.classList.add('loading');
+            
+            // Clear previous error message
+            const existingError = resultsContainer.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
 
             const formData = new FormData();
             formData.append('file', file);
@@ -268,22 +290,46 @@ import '../styles/theme.css';
                 });
 
                 if (!response.ok) {
-                    throw new Error('Upload failed');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Upload failed with status ${response.status}`);
                 }
 
-                                    const result = await response.json();
-                                    const { viewUrl } = result;
+                const result = await response.json();
+                const { viewUrl } = result;
                 
-                                    imagePreview.src = viewUrl;
-                                    directUrl.textContent = viewUrl;
-                                    markdownUrl.textContent = `![Image](${viewUrl})`;
-                                    htmlUrl.innerHTML = `&lt;img src="${viewUrl}" alt="Image" /&gt;`;
+                // Update UI with results
+                imagePreview.src = viewUrl;
+                imagePreview.hidden = false;
+                directUrl.textContent = viewUrl;
+                markdownUrl.textContent = `![Image](${viewUrl})`;
+                htmlUrl.textContent = `<img src="${viewUrl}" alt="Image" />`;
             } catch (error) {
                 console.error('Upload error:', error);
-                resultsContainer.innerHTML = '<p>Sorry, the upload failed. Please try again.</p>';
+                showError(`Upload failed: ${error.message || 'Please try again.'}`);
             } finally {
                 resultsContainer.classList.remove('loading');
             }
+        }
+
+        function showError(message) {
+            // Clear existing content except the error message container
+            const card = resultsContainer.querySelector('.card');
+            const preview = resultsContainer.querySelector('#image-preview');
+            
+            // Hide the results card and preview
+            if (card) card.hidden = true;
+            if (preview) preview.hidden = true;
+            
+            // Remove any existing error messages
+            const existingError = resultsContainer.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Create and add new error message
+            const newError = uploadError.cloneNode(true);
+            newError.textContent = message;
+            resultsContainer.appendChild(newError);
         }
     </script>
 </body>

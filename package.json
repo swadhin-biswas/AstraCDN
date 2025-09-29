@@ -11,7 +11,6 @@
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.9",
     "astro": "^5.14.1",
-    "discord.js": "^14.22.1",
     "dotenv": "^17.2.2",
     "mongoose": "^8.18.2",
     "node-fetch": "^3.3.2",

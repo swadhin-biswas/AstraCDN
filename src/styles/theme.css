@@ -202,3 +202,13 @@ footer {
     border-color: var(--accent);
     background-color: rgba(var(--accent-rgb), 0.1);
 }
+
+.error-message {
+    color: #ff6b6b;
+    padding: 1rem;
+    text-align: center;
+    margin-top: 1rem;
+    border: 1px solid #ff6b6b;
+    border-radius: 0.5rem;
+    background-color: rgba(255, 107, 107, 0.1);
+}
