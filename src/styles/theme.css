@@ -1,0 +1,204 @@
+
+:root {
+    --background: #242933;
+    --text: #c5c5d2;
+    --accent: #a971f7;
+    --accent-rgb: 169, 113, 247;
+    --card-background: #323843;
+    --border-color: #4f5261;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+font-family: "Fira Code", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+header h1 {
+    font-size: 1.5rem;
+    color: var(--accent);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo span {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+nav {
+    display: flex;
+    gap: 1rem;
+}
+
+nav a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+nav a:hover {
+    color: var(--accent);
+}
+
+.github-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.github-link:hover {
+    color: var(--accent);
+}
+
+footer a.github-link {
+    display: flex;
+    justify-content: center;
+}
+
+main {
+    padding: 2rem;
+}
+
+.hero-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-icons {
+    display: flex;
+    gap: 1rem;
+}
+
+.hero-icons svg {
+    transition: transform 0.3s ease-in-out;
+}
+
+.hero-icons svg:hover {
+    transform: translateY(-5px) scale(1.1);
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.section {
+    margin-bottom: 3rem;
+}
+
+.section h3 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--accent);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+}
+
+.card h4 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-section #drop-zone {
+    border: 2px dashed var(--border-color);
+    text-align: center;
+    cursor: pointer;
+}
+
+.upload-section #drop-zone:hover {
+    border-color: var(--accent);
+}
+
+#results-container img {
+    max-width: 100%;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+}
+
+
+pre {
+    background-color: #000;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+}
+
+code {
+    font-family: "Fira Code", monospace;
+}
+
+footer {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid var(--border-color);
+    color: #a0aec0;
+}
+
+.hidden {
+    display: none;
+}
+
+#results-container.loading #image-preview {
+    display: none;
+}
+
+#results-container.loading::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#drop-zone.drag-over {
+    border-color: var(--accent);
+    background-color: rgba(var(--accent-rgb), 0.1);
+}
