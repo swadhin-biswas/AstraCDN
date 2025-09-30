@@ -1,10 +1,21 @@
-name = "astro-project"
+name = "astracdn"
 main = "dist/_worker.js"
-compatibility_date = "2024-03-12"
+account_id = "86d20513ca452bfb3c1c1de241e869f6"
+compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
+
+# Environment variables that will be available to your Worker
+[vars]
+DB_NAME = "test"
 
 [build]
 command = "npm run build"
 
 [observability.logs]
 enabled = true
+
+# Define environment-specific variables and secrets
+# You'll need to set these after deployment using:
+# npx wrangler secret put BOT_TOKEN
+# npx wrangler secret put MONGO_URI
+# npx wrangler secret put CHANNEL_ID

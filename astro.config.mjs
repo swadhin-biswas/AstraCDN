@@ -19,7 +19,8 @@ export default defineConfig({
       },
     },
     ssr: {
-      external: ['zlib-sync'],
+      external: ['zlib-sync', 'path', 'os', 'crypto', 'fs', 'child_process'],
     },
   },
 });
+
