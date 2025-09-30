@@ -3,7 +3,7 @@ import type { APIRoute } from "astro";
 
 export const prerender = false;
 
-// Helper function to call Discord API
+// Helper function to call Discord API - use native fetch for API calls
 async function callDiscordAPI(endpoint: string, method: string = 'GET', env: any, body?: any) {
   const token = env.BOT_TOKEN;
   if (!token) {
@@ -32,7 +32,7 @@ async function callDiscordAPI(endpoint: string, method: string = 'GET', env: any
   return response.json();
 }
 
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, locals, request }) => {
   const fileId = params.fileId;
   const env = locals.runtime.env;
 
@@ -58,22 +58,15 @@ export const GET: APIRoute = async ({ params, locals }) => {
       return new Response(JSON.stringify({ error: 'No attachment found' }), { status: 404 });
     }
 
-    const fileResp = await fetch(attachment.url);
-
-    if (!fileResp.ok || !fileResp.body) {
-      return new Response(JSON.stringify({ error: 'Failed to fetch image from Discord' }), { status: 502 });
-    }
-
-    const headers = new Headers();
-    headers.set('Content-Type', fileResp.headers.get('content-type') || 'application/octet-stream');
-    if (fileResp.headers.get('content-length')) {
-      headers.set('Content-Length', fileResp.headers.get('content-length')!);
-    }
-    headers.set('Cache-Control', 'public, max-age=3600');
-    headers.set("Content-Disposition", `inline; filename="${attachment.filename}"`);
-
-
-    return new Response(fileResp.body, { status: 200, headers });
+    // Instead of proxying the image, redirect to the Discord CDN URL directly
+    // This avoids the 403 Forbidden error caused by Discord's anti-hotlinking measures
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': attachment.url,
+        'Cache-Control': 'public, max-age=31536000, immutable', // Cache for a year since the image won't change
+      }
+    });
   } catch (err) {
     console.error('[File Proxy Error]', err);
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';

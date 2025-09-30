@@ -4,10 +4,6 @@ account_id = "86d20513ca452bfb3c1c1de241e869f6"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-# Environment variables that will be available to your Worker
-[vars]
-DB_NAME = "test"
-
 [build]
 command = "npm run build"
 
