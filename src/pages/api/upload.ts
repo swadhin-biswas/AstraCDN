@@ -1,11 +1,11 @@
 // Astro API (Bun) — Direct client-side image upload to Discord
 import { sendImageToDiscord } from "@/lib/discord";
-import { ImageModel } from "@/lib/models";
+import { saveToTurso } from "@/lib/turso";
 import type { APIRoute } from "astro";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
     let fileBuffer: Buffer | Uint8Array;
     let filename: string;
@@ -38,13 +38,22 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const message = await sendImageToDiscord(fileBuffer, filename);
+    const env = locals.runtime.env;
+    const message = await sendImageToDiscord(fileBuffer, filename, env);
 
-    // Log to Mongo
-    await ImageModel.create({
-      fileId: message.id,
-      channelId: message.channel_id,
-    });
+    // Log to Turso
+    const saveResult = await saveToTurso(
+      {
+        fileId: message.id,
+        channelId: message.channel_id,
+        originalName: filename,
+      },
+      env
+    );
+
+    if (!saveResult.success) {
+      console.error("Turso save failed:", saveResult.error);
+    }
 
     const host = new URL(request.url).origin;
 
@@ -53,6 +62,7 @@ export const POST: APIRoute = async ({ request }) => {
         fileId: message.id,
         discordUrl: message.attachments?.[0]?.url || null,
         viewUrl: `${host}/api/file/${message.id}`, // optional proxy
+        tursoSaved: saveResult.success,
       }),
       { status: 200 }
     );

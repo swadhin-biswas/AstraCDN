@@ -1,13 +1,13 @@
+import { getImageFromTurso, deleteFromTurso } from "@/lib/turso";
+import type { APIRoute } from "astro";
+
 export const prerender = false;
 
-import type { APIRoute } from 'astro';
-import { ImageModel } from '@/lib/models';
-
 // Helper function to call Discord API
-async function callDiscordAPI(endpoint: string, method: string = 'GET', body?: any) {
-  const token = process.env.BOT_TOKEN;
+async function callDiscordAPI(endpoint: string, method: string = 'GET', env: any, body?: any) {
+  const token = env.BOT_TOKEN;
   if (!token) {
-    throw new Error("BOT_TOKEN environment variable is not set");
+    throw new Error("DISCORD_BOT_TOKEN environment variable is not set");
   }
   
   const response = await fetch(`https://discord.com/api/v10${endpoint}`, {
@@ -24,24 +24,30 @@ async function callDiscordAPI(endpoint: string, method: string = 'GET', body?: a
     throw new Error(`Discord API error: ${response.status} ${response.statusText} - ${errorData}`);
   }
   
+  // DELETE requests might not have a body
+  if (response.status === 204) {
+    return null;
+  }
+
   return response.json();
 }
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
   const fileId = params.fileId;
+  const env = locals.runtime.env;
 
   if (!fileId) {
     return new Response(JSON.stringify({ error: 'Missing fileId' }), { status: 400 });
   }
 
   try {
-    const image = await ImageModel.findOne({ fileId });
+    const image = await getImageFromTurso(fileId, env);
     if (!image) {
       return new Response(JSON.stringify({ error: 'File not found in DB' }), { status: 404 });
     }
 
     // Fetch message from Discord using REST API
-    const message = await callDiscordAPI(`/channels/${image.channelId}/messages/${fileId}`, 'GET');
+    const message = await callDiscordAPI(`/channels/${image.channelId}/messages/${fileId}`, 'GET', env);
     
     if (!message) {
       return new Response(JSON.stringify({ error: 'Message not found' }), { status: 404 });
@@ -64,40 +70,45 @@ export const GET: APIRoute = async ({ params }) => {
       headers.set('Content-Length', fileResp.headers.get('content-length')!);
     }
     headers.set('Cache-Control', 'public, max-age=3600');
+    headers.set("Content-Disposition", `inline; filename="${attachment.filename}"`);
+
 
     return new Response(fileResp.body, { status: 200, headers });
   } catch (err) {
     console.error('[File Proxy Error]', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+    return new Response(JSON.stringify({ error: 'Internal server error', details: errorMessage }), { status: 500 });
   }
 };
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
   const fileId = params.fileId;
+  const env = locals.runtime.env;
 
   if (!fileId) {
     return new Response(JSON.stringify({ error: 'Missing fileId' }), { status: 400 });
   }
 
   try {
-    const image = await ImageModel.findOne({ fileId });
+    const image = await getImageFromTurso(fileId, env);
     if (!image) {
       return new Response(JSON.stringify({ error: 'File not found in DB' }), { status: 404 });
     }
 
     // Delete message from Discord using REST API
     try {
-      await callDiscordAPI(`/channels/${image.channelId}/messages/${fileId}`, 'DELETE');
+      await callDiscordAPI(`/channels/${image.channelId}/messages/${fileId}`, 'DELETE', env);
     } catch (discordError) {
       console.error("[Discord Delete Error] Failed to delete message:", discordError);
       // It is safe to ignore this error and proceed with deleting the database entry
     }
 
-    await ImageModel.deleteOne({ fileId });
+    await deleteFromTurso(fileId, env);
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {
     console.error('[File Delete Error]', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+    return new Response(JSON.stringify({ error: 'Internal server error', details: errorMessage }), { status: 500 });
   }
 };

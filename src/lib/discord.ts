@@ -1,6 +1,10 @@
-export async function sendImageToDiscord(fileBuffer: Buffer | Uint8Array, filename: string) {
-  const token = process.env.BOT_TOKEN;
-  const channelId = process.env.CHANNEL_ID;
+export async function sendImageToDiscord(
+  fileBuffer: Buffer | Uint8Array,
+  filename: string,
+  env: { BOT_TOKEN: string; CHANNEL_ID: string }
+) {
+  const token = env.BOT_TOKEN;
+  const channelId = env.CHANNEL_ID;
   
   if (!token) {
     throw new Error("BOT_TOKEN environment variable is not set");
